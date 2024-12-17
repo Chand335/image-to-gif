@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,25 +11,59 @@
             border: 2px dashed #4a5568;
             transition: all 0.3s ease;
         }
+
         .drag-area.active {
             border-color: #4299e1;
             background-color: #ebf8ff;
         }
+
+        .draggable-item {
+            touch-action: none;
+            user-select: none;
+            transition: transform 0.2s ease;
+        }
+
+        .draggable-item.dragging {
+            opacity: 0.8;
+            transform: scale(1.05);
+        }
+
+        @media (max-width: 768px) {
+            .mobile-full {
+                width: 100% !important;
+                margin-bottom: 1rem;
+            }
+
+            .mobile-controls {
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                background: white;
+                padding: 1rem;
+                box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+                z-index: 1000;
+            }
+        }
     </style>
 </head>
+
 <body class="bg-gray-100 min-h-screen">
     <div class="container mx-auto px-4 py-8">
         <h1 class="text-4xl font-bold text-center text-gray-800 mb-8">Image to GIF Converter</h1>
-        
+
         <div class="flex flex-col md:flex-row gap-6">
             <!-- Left side - Upload and Options -->
-            <div class="md:w-1/2">
+            <div class="md:w-1/2 mobile-full">
                 <div class="bg-white rounded-lg shadow-lg p-6">
                     <form id="uploadForm" class="space-y-6">
                         <div class="drag-area p-8 rounded-lg text-center cursor-pointer">
                             <div class="space-y-4">
-                                <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
-                                    <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                                <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none"
+                                    viewBox="0 0 48 48">
+                                    <path
+                                        d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
+                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
                                 </svg>
                                 <div class="text-gray-600">
                                     <span class="font-medium">Click to upload</span> or drag and drop images
@@ -37,65 +72,222 @@
                             </div>
                         </div>
 
-                        <div id="preview" class="hidden space-y-4">
-                            <h3 class="text-lg font-medium text-gray-900">Selected Images:</h3>
-                            <div id="imagePreview" class="grid grid-cols-3 gap-4"></div>
+                        <div id="preview" class="hidden">
+                            <h3 class="text-lg font-medium text-gray-900 mb-4">Selected Images:</h3>
+                            <div id="imagePreview" class="grid grid-cols-2 md:grid-cols-3 gap-4"></div>
+                            <p class="text-sm text-gray-500 mt-2">Drag to reorder images</p>
                         </div>
 
                         <div class="space-y-4">
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Frame Duration Presets:</label>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Frame Duration
+                                    Presets:</label>
                                 <div class="grid grid-cols-3 gap-2">
-                                    <button type="button" class="duration-preset px-3 py-2 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors" data-duration="100">Fast (100ms)</button>
-                                    <button type="button" class="duration-preset px-3 py-2 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors" data-duration="200">Normal (200ms)</button>
-                                    <button type="button" class="duration-preset px-3 py-2 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors" data-duration="500">Slow (500ms)</button>
+                                    <button type="button"
+                                        class="duration-preset px-3 py-2 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
+                                        data-duration="100">Fast (100ms)</button>
+                                    <button type="button"
+                                        class="duration-preset px-3 py-2 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
+                                        data-duration="200">Normal (200ms)</button>
+                                    <button type="button"
+                                        class="duration-preset px-3 py-2 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
+                                        data-duration="500">Slow (500ms)</button>
                                 </div>
                             </div>
 
                             <div class="space-y-2">
-                                <label for="duration" class="block text-sm font-medium text-gray-700">Custom Duration (ms):</label>
-                                <input type="number" id="duration" name="duration" value="200" max="3000" 
-                                       class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                <label for="duration" class="block text-sm font-medium text-gray-700">Custom Duration
+                                    (ms):</label>
+                                <input type="number" id="duration" name="duration" value="80" max="3000"
+                                    class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                             </div>
 
                             <div class="space-y-2">
                                 <label class="flex items-center space-x-2">
                                     <input type="checkbox" id="reverseSequence" name="reverseSequence" checked
-                                           class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                        class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
                                     <span class="text-sm font-medium text-gray-700">Create Forward-Backward Loop</span>
                                 </label>
                             </div>
-                        </div>
 
-                        <button type="submit" class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors">
-                            Create GIF
-                        </button>
+                            <div class="space-y-2">
+                                <label for="quality" class="block text-sm font-medium text-gray-700">Quality:</label>
+                                <input type="range" id="quality" name="quality" min="1" max="100" value="100"
+                                    class="block w-full">
+                                <div class="flex justify-between text-sm text-gray-500">
+                                    <span>Smaller file</span>
+                                    <span id="qualityValue">85%</span>
+                                    <span>Better quality</span>
+                                </div>
+                            </div>
+
+                            <div class="space-y-2">
+                                <label for="maxSize" class="block text-sm font-medium text-gray-700">Maximum
+                                    Size:</label>
+                                <select id="maxSize" name="maxSize"
+                                    class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                    <option value="400">Small (400px)</option>
+                                    <option value="800">Medium (800px)</option>
+                                    <option value="1200">Large (1200px)</option>
+                                    <option value="0" selected>Original Size</option>
+                                </select>
+                            </div>
+
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Image
+                                        Adjustments:</label>
+                                    <div class="space-y-4">
+                                        <div>
+                                            <label for="brightness"
+                                                class="block text-sm text-gray-600">Brightness</label>
+                                            <input type="range" id="brightness" min="0" max="200" value="100"
+                                                class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                                            <div class="flex justify-between text-xs text-gray-500">
+                                                <span>0%</span>
+                                                <span>100%</span>
+                                                <span>200%</span>
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <label for="contrast" class="block text-sm text-gray-600">Contrast</label>
+                                            <input type="range" id="contrast" min="0" max="200" value="100"
+                                                class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                                            <div class="flex justify-between text-xs text-gray-500">
+                                                <span>0%</span>
+                                                <span>100%</span>
+                                                <span>200%</span>
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <label for="saturation"
+                                                class="block text-sm text-gray-600">Saturation</label>
+                                            <input type="range" id="saturation" min="0" max="200" value="100"
+                                                class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                                            <div class="flex justify-between text-xs text-gray-500">
+                                                <span>0%</span>
+                                                <span>100%</span>
+                                                <span>200%</span>
+                                            </div>
+                                        </div>
+
+                                        <div class="flex space-x-4">
+                                            <label class="flex items-center space-x-2">
+                                                <input type="checkbox" id="grayscale"
+                                                    class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                                <span class="text-sm text-gray-600">Grayscale</span>
+                                            </label>
+
+                                            <label class="flex items-center space-x-2">
+                                                <input type="checkbox" id="sepia"
+                                                    class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                                <span class="text-sm text-gray-600">Sepia</span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <button type="submit"
+                                class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors">
+                                Create GIF
+                            </button>
                     </form>
 
                     <div id="loading" class="hidden mt-4">
                         <div class="flex items-center justify-center">
                             <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                            <span class="ml-2 text-gray-600">Creating GIF...</span>
+                            <span class="ml-2 text-gray-600">Processing...</span>
+                        </div>
+                        <div class="mt-2">
+                            <div class="w-full bg-gray-200 rounded-full h-2.5">
+                                <div id="progressBar" class="bg-blue-600 h-2.5 rounded-full" style="width: 0%"></div>
+                            </div>
+                            <p id="progressText" class="text-sm text-gray-600 text-center mt-1">Preparing images...</p>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Right side - Preview -->
-            <div class="md:w-1/2">
-                <div id="previewContainer" class="hidden bg-white rounded-lg shadow-lg p-6">
-                    <h3 class="text-lg font-medium text-gray-900 mb-4">Preview:</h3>
-                    <div class="flex justify-center items-center min-h-[600px]">
-                        <img id="gifPreview" class="max-w-full max-h-[600px] rounded-lg shadow-lg" alt="GIF Preview">
-                    </div>
+
+        </div>
+        <!-- Right side - Preview -->
+        <div class="md:w-1/2 mobile-full">
+            <div id="previewContainer" class="hidden bg-white rounded-lg shadow-lg p-6">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Preview:</h3>
+                <div class="flex justify-center items-center min-h-[600px]">
+                    <img id="gifPreview" class="max-w-full max-h-[600px] rounded-lg shadow-lg" alt="GIF Preview">
+                </div>
+                <div class="mt-4 flex justify-center space-x-4">
+                    <button id="playPause" class="px-4 py-2 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </button>
+                    <button id="slower" class="px-4 py-2 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </button>
+                    <button id="faster" class="px-4 py-2 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M11.933 12.8a1 1 0 000-1.6L6.6 7.2A1 1 0 005 8v8a1 1 0 001.6.8l5.333-4zM19.933 12.8a1 1 0 000-1.6l-5.333-4A1 1 0 0013 8v8a1 1 0 001.6.8l5.333-4z">
+                            </path>
+                        </svg>
+                    </button>
                 </div>
             </div>
         </div>
     </div>
 
-    <script>
+    <!-- Mobile Controls -->
+    <div class="mobile-controls md:hidden">
+        <div class="flex justify-between items-center">
+            <button id="mobileCreate" class="w-full bg-blue-600 text-white py-2 px-4 rounded-md">
+                Create GIF
+            </button>
+        </div>
+    </div>
+
+    <script type="module">
+        import GifProcessor from '/static/js/gifProcessor.js';
+        import TouchControls from '/static/js/touchControls.js';
+
+        // Toggle section visibility
+        window.toggleSection = function(sectionId) {
+            const section = document.getElementById(sectionId);
+            const arrow = document.getElementById(sectionId + 'Arrow');
+            const content = document.getElementById(sectionId + 'Content');
+            
+            if (section.classList.contains('collapsed')) {
+                section.classList.remove('collapsed');
+                arrow.classList.add('rotate-180');
+                content.classList.remove('hidden');
+            } else {
+                section.classList.add('collapsed');
+                arrow.classList.remove('rotate-180');
+                content.classList.add('hidden');
+            }
+        };
+
+        // Initialize sections
+        document.addEventListener('DOMContentLoaded', function() {
+            const sections = ['preview', 'adjustments'];
+            sections.forEach(sectionId => {
+                const section = document.getElementById(sectionId);
+                if (section) {
+                    section.classList.add('collapsed');
+                }
+            });
+        });
+
+        const gifProcessor = new GifProcessor();
         const form = document.getElementById('uploadForm');
-        const dragArea = document.querySelector('.drag-area');
         const fileInput = document.getElementById('fileInput');
         const preview = document.getElementById('preview');
         const imagePreview = document.getElementById('imagePreview');
@@ -106,9 +298,14 @@
         const reverseSequence = document.getElementById('reverseSequence');
         const durationPresets = document.querySelectorAll('.duration-preset');
 
+        const brightnessInput = document.getElementById('brightness');
+        const contrastInput = document.getElementById('contrast');
+        const saturationInput = document.getElementById('saturation');
+        const grayscaleInput = document.getElementById('grayscale');
+        const sepiaInput = document.getElementById('sepia');
+
         let previewDebounceTimer;
 
-        // Duration preset buttons
         durationPresets.forEach(button => {
             button.addEventListener('click', () => {
                 durationInput.value = button.dataset.duration;
@@ -116,7 +313,6 @@
             });
         });
 
-        // Update preview when duration or reverse option changes
         durationInput.addEventListener('input', () => {
             clearTimeout(previewDebounceTimer);
             previewDebounceTimer = setTimeout(updatePreview, 500);
@@ -150,9 +346,22 @@
             }
         }
 
-        // Drag and drop handlers
+        const updateAdjustments = () => {
+            gifProcessor.setAdjustments({
+                brightness: parseFloat(brightnessInput.value),
+                contrast: parseFloat(contrastInput.value),
+                saturation: parseFloat(saturationInput.value),
+                grayscale: grayscaleInput.checked,
+                sepia: sepiaInput.checked
+            });
+        };
+
+        [brightnessInput, contrastInput, saturationInput, grayscaleInput, sepiaInput].forEach(input => {
+            input.addEventListener('input', updateAdjustments);
+        });
+
         ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-            dragArea.addEventListener(eventName, preventDefaults, false);
+            document.querySelector('.drag-area').addEventListener(eventName, preventDefaults, false);
         });
 
         function preventDefaults(e) {
@@ -161,19 +370,19 @@
         }
 
         ['dragenter', 'dragover'].forEach(eventName => {
-            dragArea.addEventListener(eventName, () => {
-                dragArea.classList.add('active');
+            document.querySelector('.drag-area').addEventListener(eventName, () => {
+                document.querySelector('.drag-area').classList.add('active');
             });
         });
 
         ['dragleave', 'drop'].forEach(eventName => {
-            dragArea.addEventListener(eventName, () => {
-                dragArea.classList.remove('active');
+            document.querySelector('.drag-area').addEventListener(eventName, () => {
+                document.querySelector('.drag-area').classList.remove('active');
             });
         });
 
-        dragArea.addEventListener('drop', handleDrop);
-        dragArea.addEventListener('click', () => fileInput.click());
+        document.querySelector('.drag-area').addEventListener('drop', handleDrop);
+        document.querySelector('.drag-area').addEventListener('click', () => fileInput.click());
         fileInput.addEventListener('change', handleFiles);
 
         function handleDrop(e) {
@@ -186,15 +395,15 @@
             const files = [...e.target.files];
             preview.classList.remove('hidden');
             imagePreview.innerHTML = '';
-            
+
             files.forEach(file => {
                 const reader = new FileReader();
-                reader.onload = function(e) {
+                reader.onload = function (e) {
                     const div = document.createElement('div');
                     div.className = 'relative aspect-square';
                     div.innerHTML = `
-                        <img src="${e.target.result}" class="w-full h-full object-cover rounded-lg">
-                    `;
+                            <img src="${e.target.result}" class="w-full h-full object-cover rounded-lg">
+                        `;
                     imagePreview.appendChild(div);
                 }
                 reader.readAsDataURL(file);
@@ -213,7 +422,7 @@
             }
 
             loading.classList.remove('hidden');
-            
+
             const formData = new FormData();
             for (let file of files) {
                 formData.append('images[]', file);
@@ -247,6 +456,21 @@
                 loading.classList.add('hidden');
             }
         });
+
+        document.getElementById('mobileCreate').addEventListener('click', () => {
+            document.querySelector('#uploadForm button[type="submit"]').click();
+        });
+
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/static/js/serviceWorker.js')
+                .then(registration => {
+                    console.log('ServiceWorker registration successful');
+                })
+                .catch(err => {
+                    console.log('ServiceWorker registration failed: ', err);
+                });
+        }
     </script>
 </body>
+
 </html>
