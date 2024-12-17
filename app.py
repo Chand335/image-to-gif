@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, send_file, jsonify, send_from
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from werkzeug.utils import secure_filename
+from werkzeug.exceptions import RequestEntityTooLarge
 import os
 from datetime import datetime
 from utils import validate_image, create_gif_sequence, allowed_file
@@ -10,8 +11,9 @@ import io
 from PIL import Image
 
 app = Flask(__name__)
-app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
+app.config['MAX_CONTENT_LENGTH'] = 160 * 1024 * 1024  # 16MB max file size
 app.config['STATIC_FOLDER'] = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static')
+app.config['UPLOAD_FOLDER'] = 'uploads'
 UPLOAD_FOLDER = 'uploads'
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'bmp', 'webp'}
 ALLOWED_MIME_TYPES = {'image/jpeg', 'image/png', 'image/gif', 'image/bmp', 'image/webp'}
@@ -182,11 +184,11 @@ def preview_gif():
         return jsonify({'error': str(e)}), 500
 
 # Register error handlers
-@app.errorhandler(413)
-def request_entity_too_large(error):
+@app.errorhandler(RequestEntityTooLarge)
+def handle_file_too_large(e):
     return jsonify({
-        'error': 'File too large',
-        'code': 'FILE_TOO_LARGE'
+        'error': 'File size too large. Maximum size is 16MB.',
+        'max_size': app.config['MAX_CONTENT_LENGTH']
     }), 413
 
 @app.errorhandler(429)

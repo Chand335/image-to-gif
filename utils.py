@@ -55,7 +55,7 @@ def create_gif_sequence(images, duration=200, reverse=False):
 
         # Convert all images to RGBA mode for consistency
         frames = []
-        max_size = (800, 800)  # Maximum size for preview
+        max_size = (1920, 1080)  # Maximum size for preview
         
         for i, img in enumerate(images):
             try:

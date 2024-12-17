@@ -6,46 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Image to GIF Converter</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <style>
-        .drag-area {
-            border: 2px dashed #4a5568;
-            transition: all 0.3s ease;
-        }
-
-        .drag-area.active {
-            border-color: #4299e1;
-            background-color: #ebf8ff;
-        }
-
-        .draggable-item {
-            touch-action: none;
-            user-select: none;
-            transition: transform 0.2s ease;
-        }
-
-        .draggable-item.dragging {
-            opacity: 0.8;
-            transform: scale(1.05);
-        }
-
-        @media (max-width: 768px) {
-            .mobile-full {
-                width: 100% !important;
-                margin-bottom: 1rem;
-            }
-
-            .mobile-controls {
-                position: fixed;
-                bottom: 0;
-                left: 0;
-                right: 0;
-                background: white;
-                padding: 1rem;
-                box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
-                z-index: 1000;
-            }
-        }
-    </style>
+    <link href="/static/css/styles.css" rel="stylesheet">
+    
 </head>
 
 <body class="bg-gray-100 min-h-screen">
@@ -133,7 +95,7 @@
                                 </select>
                             </div>
 
-                            <div class="space-y-4">
+                            <div class="space-y-4 hidden">
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-2">Image
                                         Adjustments:</label>
@@ -241,6 +203,13 @@
                         </svg>
                     </button>
                 </div>
+                <div id="previewLoading"
+                    class="absolute inset-0 bg-white bg-opacity-90 flex items-center justify-center hidden">
+                    <div class="text-center">
+                        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-3"></div>
+                        <p class="text-gray-600">Generating preview...</p>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -254,223 +223,8 @@
         </div>
     </div>
 
-    <script type="module">
-        import GifProcessor from '/static/js/gifProcessor.js';
-        import TouchControls from '/static/js/touchControls.js';
-
-        // Toggle section visibility
-        window.toggleSection = function(sectionId) {
-            const section = document.getElementById(sectionId);
-            const arrow = document.getElementById(sectionId + 'Arrow');
-            const content = document.getElementById(sectionId + 'Content');
-            
-            if (section.classList.contains('collapsed')) {
-                section.classList.remove('collapsed');
-                arrow.classList.add('rotate-180');
-                content.classList.remove('hidden');
-            } else {
-                section.classList.add('collapsed');
-                arrow.classList.remove('rotate-180');
-                content.classList.add('hidden');
-            }
-        };
-
-        // Initialize sections
-        document.addEventListener('DOMContentLoaded', function() {
-            const sections = ['preview', 'adjustments'];
-            sections.forEach(sectionId => {
-                const section = document.getElementById(sectionId);
-                if (section) {
-                    section.classList.add('collapsed');
-                }
-            });
-        });
-
-        const gifProcessor = new GifProcessor();
-        const form = document.getElementById('uploadForm');
-        const fileInput = document.getElementById('fileInput');
-        const preview = document.getElementById('preview');
-        const imagePreview = document.getElementById('imagePreview');
-        const loading = document.getElementById('loading');
-        const previewContainer = document.getElementById('previewContainer');
-        const gifPreview = document.getElementById('gifPreview');
-        const durationInput = document.getElementById('duration');
-        const reverseSequence = document.getElementById('reverseSequence');
-        const durationPresets = document.querySelectorAll('.duration-preset');
-
-        const brightnessInput = document.getElementById('brightness');
-        const contrastInput = document.getElementById('contrast');
-        const saturationInput = document.getElementById('saturation');
-        const grayscaleInput = document.getElementById('grayscale');
-        const sepiaInput = document.getElementById('sepia');
-
-        let previewDebounceTimer;
-
-        durationPresets.forEach(button => {
-            button.addEventListener('click', () => {
-                durationInput.value = button.dataset.duration;
-                updatePreview();
-            });
-        });
-
-        durationInput.addEventListener('input', () => {
-            clearTimeout(previewDebounceTimer);
-            previewDebounceTimer = setTimeout(updatePreview, 500);
-        });
-
-        reverseSequence.addEventListener('change', updatePreview);
-
-        async function updatePreview() {
-            if (fileInput.files.length < 2) return;
-
-            const formData = new FormData();
-            for (let file of fileInput.files) {
-                formData.append('images[]', file);
-            }
-            formData.append('duration', durationInput.value);
-            formData.append('reverse', reverseSequence.checked);
-
-            try {
-                const response = await fetch('/preview-gif', {
-                    method: 'POST',
-                    body: formData
-                });
-
-                if (response.ok) {
-                    const data = await response.json();
-                    gifPreview.src = data.preview;
-                    previewContainer.classList.remove('hidden');
-                }
-            } catch (error) {
-                console.error('Preview generation failed:', error);
-            }
-        }
-
-        const updateAdjustments = () => {
-            gifProcessor.setAdjustments({
-                brightness: parseFloat(brightnessInput.value),
-                contrast: parseFloat(contrastInput.value),
-                saturation: parseFloat(saturationInput.value),
-                grayscale: grayscaleInput.checked,
-                sepia: sepiaInput.checked
-            });
-        };
-
-        [brightnessInput, contrastInput, saturationInput, grayscaleInput, sepiaInput].forEach(input => {
-            input.addEventListener('input', updateAdjustments);
-        });
-
-        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-            document.querySelector('.drag-area').addEventListener(eventName, preventDefaults, false);
-        });
-
-        function preventDefaults(e) {
-            e.preventDefault();
-            e.stopPropagation();
-        }
-
-        ['dragenter', 'dragover'].forEach(eventName => {
-            document.querySelector('.drag-area').addEventListener(eventName, () => {
-                document.querySelector('.drag-area').classList.add('active');
-            });
-        });
-
-        ['dragleave', 'drop'].forEach(eventName => {
-            document.querySelector('.drag-area').addEventListener(eventName, () => {
-                document.querySelector('.drag-area').classList.remove('active');
-            });
-        });
-
-        document.querySelector('.drag-area').addEventListener('drop', handleDrop);
-        document.querySelector('.drag-area').addEventListener('click', () => fileInput.click());
-        fileInput.addEventListener('change', handleFiles);
-
-        function handleDrop(e) {
-            const dt = e.dataTransfer;
-            const files = dt.files;
-            handleFiles({ target: { files } });
-        }
-
-        function handleFiles(e) {
-            const files = [...e.target.files];
-            preview.classList.remove('hidden');
-            imagePreview.innerHTML = '';
-
-            files.forEach(file => {
-                const reader = new FileReader();
-                reader.onload = function (e) {
-                    const div = document.createElement('div');
-                    div.className = 'relative aspect-square';
-                    div.innerHTML = `
-                            <img src="${e.target.result}" class="w-full h-full object-cover rounded-lg">
-                        `;
-                    imagePreview.appendChild(div);
-                }
-                reader.readAsDataURL(file);
-            });
-
-            updatePreview();
-        }
-
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const files = fileInput.files;
-
-            if (files.length < 2) {
-                alert('Please select at least 2 images');
-                return;
-            }
-
-            loading.classList.remove('hidden');
-
-            const formData = new FormData();
-            for (let file of files) {
-                formData.append('images[]', file);
-            }
-            formData.append('duration', durationInput.value);
-            formData.append('reverse', reverseSequence.checked);
-
-            try {
-                const response = await fetch('/create-gif', {
-                    method: 'POST',
-                    body: formData
-                });
-
-                if (response.ok) {
-                    const blob = await response.blob();
-                    const url = window.URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = response.headers.get('content-disposition').split('filename=')[1];
-                    document.body.appendChild(a);
-                    a.click();
-                    window.URL.revokeObjectURL(url);
-                    a.remove();
-                } else {
-                    const error = await response.json();
-                    alert(error.error || 'Failed to create GIF');
-                }
-            } catch (error) {
-                alert('An error occurred while creating the GIF');
-            } finally {
-                loading.classList.add('hidden');
-            }
-        });
-
-        document.getElementById('mobileCreate').addEventListener('click', () => {
-            document.querySelector('#uploadForm button[type="submit"]').click();
-        });
-
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/static/js/serviceWorker.js')
-                .then(registration => {
-                    console.log('ServiceWorker registration successful');
-                })
-                .catch(err => {
-                    console.log('ServiceWorker registration failed: ', err);
-                });
-        }
-    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script type="module" src="/static/js/script.js"></script>
 </body>
 
 </html>
